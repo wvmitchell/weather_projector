@@ -3,6 +3,7 @@ source 'https://rubygems.org'
 gem 'dotenv'
 gem 'forecast_io'
 gem 'geocoder'
+gem 'httparty'
 
 gem 'rspec'
 gem 'vcr'
