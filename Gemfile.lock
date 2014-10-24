@@ -12,6 +12,7 @@ GEM
       faraday
       hashie
       multi_json
+    geocoder (1.2.5)
     hashie (3.3.1)
     method_source (0.8.2)
     multi_json (1.10.1)
@@ -33,6 +34,7 @@ GEM
       rspec-support (~> 3.0.0)
     rspec-support (3.0.4)
     slop (3.6.0)
+    vcr (2.9.3)
 
 PLATFORMS
   ruby
@@ -40,5 +42,7 @@ PLATFORMS
 DEPENDENCIES
   dotenv
   forecast_io
+  geocoder
   pry
   rspec
+  vcr

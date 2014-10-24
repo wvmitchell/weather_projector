@@ -1,3 +1,4 @@
+require 'time'
 require 'rubygems'
 require 'bundler'
 Bundler.require(:default)

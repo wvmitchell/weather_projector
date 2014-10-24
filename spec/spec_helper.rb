@@ -1,4 +1,8 @@
+require 'time'
 require 'pry'
+require 'geocoder'
+require 'forecast_io'
+
 Dir[Dir.pwd + "/lib/models/*.rb"].each {|file| require_relative file }
 
 RSpec.configure do |config|
