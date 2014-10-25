@@ -2,6 +2,7 @@ require 'time'
 require 'pry'
 require 'geocoder'
 require 'forecast_io'
+require 'httparty'
 
 Dir[Dir.pwd + "/lib/models/*.rb"].each {|file| require_relative file }
 
