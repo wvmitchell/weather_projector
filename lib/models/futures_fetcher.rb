@@ -8,21 +8,13 @@ class FuturesFetcher
   def initialize(options={})
     @exchange = options[:exchange] || 'CME'
     @code = options[:code] || 'HO'
-    @month = options[:month] || MONTH_CODES[next_month.to_s]
-    @year = options[:year] || this_or_next_year.to_s
-  end
-
-
-  def get_historical_future_range(start_date, end_date)
-    klass.get('/GetHistoricalFutureRange', query: {'Symbol' => symbol,
-                                                   'Month' => month,
-                                                   'Year'  => year,
-                                                   'StartDate' => start_date,
-                                                   'EndDate' => end_date})
+    @month = options[:month] ? MONTH_CODES[options[:month].to_s] : MONTH_CODES[next_month.to_s]
+    @year = options[:year] ? options[:year] : this_or_next_year.to_s
   end
 
   def get_future_dataset(options={})
-    klass.get("/#{exchange}/#{code + month + year}.json")
+    sort_order = options[:sort_order] || 'asc'
+    klass.get("/#{exchange}/#{code + month + year}.json", query: { 'sort_order' => sort_order })
   end
 
   def klass
