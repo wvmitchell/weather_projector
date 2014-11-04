@@ -26,12 +26,13 @@ class PredictionSheetBuilder
 
   def build
     futures_set = futures_fetcher.get_future_dataset
-    data_points = futures_set['data'].find_all { |day| day[1] > 0.0 }
+    data_points = futures_set['data'].find_all { |day| day[6] != nil }
     CSV.open(filename, 'wb') do |csv|
       data_points.each_with_index do |data_point, index|
+        next if index == 0
         row = []
         date = Date.parse(data_point[0])
-        row << ( data_point[5] || 0.0 ) # change in price from previous trading day
+        row << ( data_point[6] - data_points[index-1][6] ).round(5) # change in price from previous trading day
         row << date.year
         row << date.month
         row << date.day
