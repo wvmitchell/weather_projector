@@ -1,3 +1,5 @@
 .env
 
 /lib/prediction_sheets/
+
+/keys/
