@@ -7,6 +7,7 @@ gem 'httparty'
 gem 'rake'
 gem 'quandl_ruby'
 gem 'google-api-client'
+gem 'activesupport'
 
 gem 'rspec'
 gem 'vcr'

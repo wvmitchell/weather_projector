@@ -1,20 +1,18 @@
 class FuturesFetcher
-  include HTTParty
-  base_uri 'http://www.quandl.com/api/v1/datasets'
-  default_params 'auth_token' => ENV['QUANDL_API_KEY']
 
-  attr_reader :exchange, :code, :month, :year
+  attr_reader :exchange, :code, :month
+  attr_accessor :year, :month
 
   def initialize(options={})
     @exchange = options[:exchange] || 'CME'
     @code = options[:code] || 'HO'
-    @month = options[:month] ? MONTH_CODES[options[:month].to_s] : MONTH_CODES[next_month.to_s]
+    @month = options[:month] || 'Z'
     @year = options[:year] ? options[:year] : this_or_next_year.to_s
   end
 
   def get_future_dataset(options={})
-    sort_order = options[:sort_order] || 'asc'
-    klass.get("/#{exchange}/#{code + month + year}.json", query: { 'sort_order' => sort_order })
+    options[:sort_order] ||= 'asc'
+    Quandl::Dataset.new("#{exchange}/#{code + month + year}", options).data
   end
 
   def klass
@@ -28,20 +26,5 @@ class FuturesFetcher
   def this_or_next_year
     next_month == 1 ? Time.now.year + 1 : Time.now.year
   end
-
-  MONTH_CODES = {
-    '1' => 'F',
-    '2' => 'G',
-    '3' => 'H',
-    '4' => 'J',
-    '5' => 'K',
-    '6' => 'M',
-    '7' => 'N',
-    '8' => 'Q',
-    '9' => 'U',
-    '10' => 'V',
-    '11' => 'X',
-    '12' => 'Z'
-  }
 
 end

@@ -2,28 +2,28 @@ class Predictor
 
   PROJECT = ENV['GOOGLE_PROJECT_ID']
 
-  attr_reader :client, :prediction
+  attr_reader :client, :prediction, :location, :code, :month, :year, :id
 
-  def initialize
+  def initialize(options)
     @client = Google::APIClient.new(
       application_name: 'Futures Forecaster',
       application_version: '1.0.0'
     )
     @prediction = client.discovered_api('prediction', 'v1.6')
+    @location = options[:location]
+    @code = options[:code].upcase
+    @month = MONTH_CODES[options[:month].to_s]
+    @year = options[:year].to_s
+    raise 'Invalid Options' unless location && code && month && year
+    @id = [location, code].join('_').gsub(' ', '_')
   end
 
-  def train(options)
-    location = options[:location]
-    code = options[:code]
-    month = options[:month]
-    year = options[:year].to_s
-    raise 'Invalid Options' unless location && code && month && year
-    id = [location, code + month + year].join('_').gsub(' ', '_')
+  def train
     file = id + '.csv'
 
     training = prediction.trainedmodels.insert.request_schema.new
     training.id = id
-    training.storage_data_location = "heating_oil/#{code + month + year}/#{file}"
+    training.storage_data_location = "#{FUTURES[code]}/#{file}"
     authorize_client!
     client.execute(
       api_method:  prediction.trainedmodels.insert,
@@ -33,13 +33,7 @@ class Predictor
     )
   end
 
-  def check_status(options)
-    location = options[:location]
-    code = options[:code]
-    month = options[:month]
-    year = options[:year].to_s
-    raise 'Invalid Options' unless location && code && month && year
-    id = [location, code + month + year].join('_').gsub(' ', '_')
+  def check_status
     authorize_client!
     client.execute(
       api_method: prediction.trainedmodels.get,
@@ -48,15 +42,12 @@ class Predictor
   end
 
   def predict(options)
-    location = options[:location]
-    code = options[:code]
-    month = options[:month]
-    year = options[:year].to_s
-    raise 'Invalid Options' unless location && code && month && year
-    id = [location, code + month + year].join('_').gsub(' ', '_')
+    date = options[:date] || Date.today + 1
+    raise 'Invalid day of the week, must be Mon-Fri' if date.cwday > 5
     input = prediction.trainedmodels.predict.request_schema.new
     input.input = {}
-    input.input.csv_instance = [2014,11,4,2,12.21,13.64,18.405,16.37,15.585,12.465,4.97,-1.365,10.08,6.44,7.835,6.22,8.43,10.935,5.42,9.6,10.525,2.185,1.07,2.74,-5.51,-6.75,2.05,8.155,8.665,4.85,2.24,-2.91,-1.795,3.68,12.02]
+    builder = PredictionBuilder.new(location: location, code: code, month: month, year: year)
+    input.input.csv_instance = builder.build_prediction_for(date)
     authorize_client!
     client.execute(
       api_method: prediction.trainedmodels.predict,
@@ -64,6 +55,52 @@ class Predictor
       headers: {'Content-Type' => 'application/json'},
       body_object: input
     )
+  end
+
+  def update
+    unless Date.today.cwday > 5
+      input = prediction.trainedmodels.predict.request_schema.new
+      input.input = {}
+      builder = PredictionBuilder.new(location: location, code: code, month: month, year: year)
+      input.input.csv_instance = builder.build_todays_update
+      authorize_client!
+      client.execute(
+        api_method: prediction.trainedmodels.update,
+        parameters: {'id' => id, 'project' => PROJECT},
+        headers: {'Content-Type' => 'application/json'},
+        body_object: input
+      )
+    end
+  end
+
+  def analyze
+    authorize_client!
+    client.execute(
+      api_method: prediction.trainedmodels.analyze,
+      parameters: {'id' => id, 'project' => PROJECT},
+      headers: {'Content-Type' => 'application/json'}
+    )
+  end
+
+  def list
+    authorize_client!
+    client.execute(
+      api_method: prediction.trainedmodels.list,
+      parameters: {'project' => PROJECT},
+      headers: {'Content-Type' => 'application/json'}
+    )
+  end
+
+  def delete(options={})
+    ids = options[:ids] || id
+    ids.each do |model_id|
+      authorize_client!
+      client.execute(
+        api_method: prediction.trainedmodels.delete,
+        parameters: {'id' => model_id, 'project' => PROJECT },
+        headers: {'Content-Type' => 'application/json'},
+      )
+    end
   end
 
   def authorize_client!
